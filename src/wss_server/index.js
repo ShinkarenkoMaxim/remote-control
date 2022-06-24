@@ -11,7 +11,9 @@ wss.on('connection', (socket) => {
 
   socket.on('message', (data) => {
     let answer = '';
-    const [command, value] = data.toString().split(' ');
+
+    const parsedData = data.toString();
+    const [command, value] = parsedData.split(' ');
     const { x, y } = robot.getMousePos();
 
     const mouseControlCommands = [
@@ -43,6 +45,65 @@ wss.on('connection', (socket) => {
 
     if (command.startsWith('mouse_position')) {
       answer = `${command} ${x}, ${y}`;
+    }
+
+    if (command.startsWith('draw_circle')) {
+      const r = Number(value);
+      const mouse = robot.getMousePos();
+
+      robot.setMouseDelay(2);
+
+      for (let i = 0; i <= Math.PI * 2; i += 0.01) {
+        if (i > 0) {
+          // For fix problem with first position
+          robot.mouseToggle('down');
+        }
+
+        const x = mouse.x + r * Math.cos(i);
+        const y = mouse.y + r * Math.sin(i);
+
+        robot.dragMouse(x, y);
+      }
+
+      robot.mouseToggle('up');
+
+      answer = command;
+    }
+
+    if (command.startsWith('draw_rectangle')) {
+      const dimensions = parsedData.split(' ');
+      const width = Number(dimensions[1]);
+      const height = Number(dimensions[2]);
+
+      robot.setMouseDelay(2);
+
+      robot.mouseToggle('down');
+
+      robot.moveMouseSmooth(x + width, y);
+      robot.moveMouseSmooth(x + width, y - height);
+      robot.moveMouseSmooth(x, y - height);
+      robot.moveMouseSmooth(x, y);
+
+      robot.mouseToggle('up');
+
+      answer = command;
+    }
+
+    if (command.startsWith('draw_square')) {
+      const side = Number(value);
+
+      robot.setMouseDelay(2);
+
+      robot.mouseToggle('down');
+
+      robot.moveMouseSmooth(x + side, y);
+      robot.moveMouseSmooth(x + side, y - side);
+      robot.moveMouseSmooth(x, y - side);
+      robot.moveMouseSmooth(x, y);
+
+      robot.mouseToggle('up');
+
+      answer = command;
     }
 
     socket.send(answer);
