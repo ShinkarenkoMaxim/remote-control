@@ -1,5 +1,6 @@
 import WebSocket, { WebSocketServer } from 'ws';
 import robot from 'robotjs';
+import Jimp from 'jimp';
 
 const WSS_PORT = 8080;
 
@@ -9,7 +10,7 @@ const wss = new WebSocketServer({ port: WSS_PORT });
 wss.on('connection', (socket) => {
   console.log('Wss started');
 
-  socket.on('message', (data) => {
+  socket.on('message', async (data) => {
     let answer = '';
 
     const parsedData = data.toString();
@@ -104,6 +105,37 @@ wss.on('connection', (socket) => {
       robot.mouseToggle('up');
 
       answer = command;
+    }
+
+    if (command.startsWith('prnt_scrn')) {
+      const size = 200;
+      const screenshot = robot.screen.capture(x, y, size, size);
+
+      const width = screenshot.byteWidth / screenshot.bytesPerPixel; // width is sometimes wrong! Link on Issue https://github.com/octalmage/robotjs/issues/13
+      const height = screenshot.height;
+
+      let red, green, blue;
+      const image = new Jimp(width, height);
+      screenshot.image.forEach((byte, i) => {
+        switch (i % 4) {
+          case 0:
+            return (blue = byte);
+          case 1:
+            return (green = byte);
+          case 2:
+            return (red = byte);
+          case 3:
+            image.bitmap.data[i - 3] = red;
+            image.bitmap.data[i - 2] = green;
+            image.bitmap.data[i - 1] = blue;
+            image.bitmap.data[i] = 255;
+        }
+      });
+
+      const base64Image = await image.getBase64Async('image/png');
+      const base64 = base64Image.split(',')[1];
+
+      answer = command + ' ' + base64;
     }
 
     socket.send(answer);
