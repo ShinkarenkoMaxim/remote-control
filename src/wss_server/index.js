@@ -3,8 +3,9 @@ import robot from 'robotjs';
 import Jimp from 'jimp';
 
 const WSS_PORT = 8080;
+const WSS_URL = `wss://localhost:${WSS_PORT}`;
 
-console.log(`Start Websockets server on the ${WSS_PORT} port!`);
+console.log(`Start WebSockets server on the ${WSS_URL}!`);
 const wss = new WebSocketServer({ port: WSS_PORT });
 
 wss.on('connection', (socket) => {
@@ -144,6 +145,10 @@ wss.on('connection', (socket) => {
   socket.send('something');
 });
 
-wss.on('message', (data) => {
-  console.log(data);
+wss.on('error', (err) => {
+  console.log(err);
+});
+
+wss.on('close', () => {
+  console.log('Websocket server disconnected');
 });
