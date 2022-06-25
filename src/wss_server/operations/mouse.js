@@ -21,7 +21,7 @@ export const mouseOperations = ({ command, value, mousePos }) => {
   }
 
   if (command.startsWith('mouse_position')) {
-    answer = `${command} ${x}, ${y}`;
+    answer = `${command} ${x},${y}`;
   }
 
   return answer;
